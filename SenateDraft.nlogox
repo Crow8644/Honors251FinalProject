@@ -25,12 +25,12 @@ to setup
     if member? "(R" label [
       set color [255 0 0]
       set party "R"
-      set xcor 30
+;      set xcor 30
     ]
     if member? "(D" label [
       set color blue
       set party "D"
-      set xcor -30
+;      set xcor -30
     ]
     if member? "(I" label [
       set party "I"
@@ -38,32 +38,54 @@ to setup
     ]
     set size 5
     set shape "circle"
+    
+    ; Redistributing vertically makes graph more clear later, once sprung
+    set ycor random-ycor
   ]
   
   ; repeat 30 [layout-spring senators with [party = "R"] relationships 0.2 60 6]
   ; repeat 30 [layout-spring senators with [party = "D"] relationships 0.2 60 6]
   ; repeat 30 [layout-spring senators with [party = "I"] relationships 0.2 60 6]
-  repeat 30 [layout-spring senators relationships 0.2 60 6]
+  ; repeat 5 [layout-spring senators relationships 0.2 60 6]
 
   
   ask relationships [
+    set color (list 255 0 255 (weight / 15))
     if ([party] of end1 = "D") and ([party] of end2 = "D") [
       set color (list 0 0 255 (weight / 15))
     ]
     if ([party] of end1 = "R") and ([party] of end2 = "R") [
       set color (list 255 0 0 (weight / 15))
     ]
-    if [party] of end1 != [party] of end2 [
-      set color (list 255 0 255 (weight / 15))
-    ]
     
   ]
+  
+  distribute
+  repeat 20 [layout-spring senators relationships 0.2 70 6]
   
   reset-ticks
 end
 
 to go
   tick
+end
+
+to distribute
+  ask senators [
+    let leaning 0
+    ask my-out-relationships [
+      ifelse [party] of other-end = "R" [
+        set leaning (leaning + weight)
+      ] [
+        set leaning (leaning - weight)
+      ]
+    ]
+    let connection-count (count my-out-relationships)
+    
+    ; There are errors if we try to move turtles outside of the screen
+    ; The maximum weight in the set we're testing is 333. TODO: find this programatically so we can use various datasets
+    set xcor (((leaning / connection-count) / 333) * 128)
+  ]
 end
 </code>
   <widgets>

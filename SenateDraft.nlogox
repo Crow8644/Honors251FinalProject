@@ -1,17 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <model version="NetLogo 7.0.0" snapToGrid="true">
-  <code>extensions [ nw ]
+  <code><![CDATA[extensions [ nw ]
 
 breed [ senators senator ]
 
 directed-link-breed [ relationships relationship ]
 
 globals [
-  popular-opinion 0.5
+  popular-opinion
 ]
 
 senators-own [
   party
+  last-vote
   opinion ; Range from 0 to 1, chance of voting the bill through
 ]
 
@@ -21,6 +22,8 @@ relationships-own [
 
 to setup
   clear-all
+  
+  set popular-opinion 0.5
   ; Read the file
   nw:load-gexf "votes_114.gexf" senators relationships
   
@@ -102,11 +105,15 @@ to set-initial-opinions
 end
 
 to go
+  adjust-opinions
+  vote
+  
   tick
 end
 
 to adjust-opinions
   ask senators [
+    ;; Calculate relationship-based influence:
     let surrounding-opinions 0
     let sum-of-weights (sum [weight] of my-relationships)
     
@@ -114,9 +121,32 @@ to adjust-opinions
       set surrounding-opinions (surrounding-opinions + (weight * ([opinion] of other-end)))
     ]
     let relation-opinion (surrounding-opinions / sum-of-weights)
-  ]
+    
+    ;; Change own opinion:
+    let total-influence ((concern-for-connections / 100) * relation-opinion + ((100 - concern-for-connections) / 100) * popular-opinion)
+    
+    set opinion (opinion + (opinion-changability * (total-influence - opinion))
+)  ]
 end
-</code>
+
+to vote
+  let yeses 0
+  ask senators [
+    let x random-float 1
+    ifelse x < opinion [
+      set last-vote "Y"
+      set shape "arrow"
+      set yeses (yeses + 1)
+    ] [
+      set last-vote "N"
+      set shape "x"
+    ]
+  ]
+  
+  if yeses >= 60 [stop]
+end
+
+]]></code>
   <widgets>
     <view x="270" wrappingAllowedX="false" y="5" frameRate="30.0" minPycor="-64" height="625" showTickCounter="true" patchSize="4.814" fontSize="10" wrappingAllowedY="false" width="625" tickCounterLabel="ticks" maxPycor="64" updateMode="0" maxPxcor="64" minPxcor="-64"></view>
     <button x="125" y="30" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">setup</button>

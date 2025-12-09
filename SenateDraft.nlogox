@@ -8,7 +8,7 @@ directed-link-breed [ relationships relationship ]
 
 globals [
   popular-pressure
-  change-threshold
+  influence-threshold
   yeses
 ]
 
@@ -26,9 +26,7 @@ relationships-own [
 to setup
   clear-all
   
-  set popular-pressure 0.5
-  set change-threshold .2
-  set yeses 0
+  set-globals
   
   ; Read the file
   let filename (word "graphs/votes_" congress ".gexf")
@@ -76,18 +74,20 @@ end
 
 to set-globals
   set popular-pressure 0.5
-  set change-threshold .2
+  set influence-threshold .15
   set yeses 0
 end
 
 to color-relationships
+  let max-weight max [weight] of relationships
   ask relationships [
-    set color (list 255 0 255 (weight / 15)) ; Set everything to purple initially
+    let opacity (weight / max-weight) * 50
+    set color (list 255 0 255 opacity) ; Set everything to purple initially
     if ([party] of end1 = "D") and ([party] of end2 = "D") [
-      set color (list 0 0 255 (weight / 15))
+      set color (list 0 0 255 opacity)
     ]
     if ([party] of end1 = "R") and ([party] of end2 = "R") [
-      set color (list 255 0 0 (weight / 15))
+      set color (list 255 0 0 opacity)
     ]
   ]
 end
@@ -143,6 +143,16 @@ to go
   ;; We do this after the tick, so our graphs update
   if yeses >= 60 [
     print (word "Bill passed with " yeses " votes.")
+
+    output-print "VOTED NO:"
+    ask incumbant-defectors [
+      output-print label
+    ]
+    
+    output-print "\nVOTED YES:"
+    ask challenging-defectors [
+      output-print label
+    ]
     stop
   ]
 end
@@ -161,9 +171,9 @@ to adjust-opinions
     ;; Change own opinion:
     set last-total-influence ((concern-for-connections / 100) * network-opinion + ((100 - concern-for-connections) / 100) * popular-pressure)
     
-    if abs last-total-influence > change-threshold
+    if abs last-total-influence > influence-threshold
     [
-      set opinion (opinion + (opinion-changability * last-total-influence))
+      set opinion (opinion * ( 1 + (opinion-changability * last-total-influence)))
     ]
   ]
 end
@@ -171,10 +181,14 @@ end
 to vote
   set yeses 0
   ask senators [
-    let x random-float 1
+    ;; Old version:
+    ; let x random-float 1
+    
+    ;; New version, attempting to make voting less erratic
+    let x (random-float 0.5 + random-float 0.5)
     ifelse x < opinion [
       set last-vote "Y"
-      set shape "arrow"
+      set shape "check"
     ] [
       set last-vote "N"
       set shape "x"
@@ -186,28 +200,36 @@ end
 to update-relationships-based-on-votes
   ask relationships [
     ifelse [last-vote] of end1 = [last-vote] of end2 [
-      set weight (weight + (weight * relation-changability))
+      ;; Solved issue from last time: weight can no longer go below 0
+      set weight (weight * (1 + relation-changability))
     ]
     [
-      set weight (weight - (weight * relation-changability))
+      set weight (weight * (1 - relation-changability))
       
     ]
   ]
 end
+
+to-report incumbant-defectors
+  report senators with [party = introduced-by and last-vote = "N"]
+end
+
+to-report challenging-defectors
+  report senators with [party != introduced-by and last-vote = "Y"]
+end
+
+to-report count-defectors
+    report (count incumbant-defectors) + (count challenging-defectors)
+end
 ]]></code>
   <widgets>
-    <view x="270" wrappingAllowedX="false" y="5" frameRate="30.0" minPycor="-64" height="625" showTickCounter="true" patchSize="4.814" fontSize="10" wrappingAllowedY="false" width="625" tickCounterLabel="ticks" maxPycor="64" updateMode="0" maxPxcor="64" minPxcor="-64"></view>
+    <view x="270" wrappingAllowedX="false" y="5" frameRate="30.0" minPycor="-64" height="599" showTickCounter="true" patchSize="4.612403101" fontSize="10" wrappingAllowedY="false" width="599" tickCounterLabel="ticks" maxPycor="64" updateMode="0" maxPxcor="64" minPxcor="-64"></view>
     <button x="125" y="30" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">setup</button>
     <button x="190" y="30" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">go</button>
-    <chooser x="905" y="5" height="60" variable="introduced-by" current="0" width="250" display="introduced-by">
-      <choice type="string" value="D"></choice>
-      <choice type="string" value="R"></choice>
-    </chooser>
-    <slider x="905" step="0.01" y="75" max="1" width="250" display="opinion-changability" height="50" min="0.01" direction="Horizontal" default="0.05" variable="opinion-changability"></slider>
-    <slider x="905" step="0.01" y="130" max="0.2" width="250" display="relation-changability" height="50" min="0.01" direction="Horizontal" default="0.03" variable="relation-changability"></slider>
-    <slider x="905" step="1" y="185" max="100" width="250" display="concern-for-connections" height="50" min="0" direction="Horizontal" default="100.0" variable="concern-for-connections" units="%"></slider>
-    <button x="125" y="80" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
-    <chooser x="1165" y="5" height="60" variable="congress" current="7" width="250" display="congress">
+    <button x="190" y="80" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
+    <slider x="1135" step="0.1" y="100" max="3" width="250" display="interparty-strengthening-factor" height="50" min="1" direction="Horizontal" default="1.5" variable="interparty-strengthening-factor"></slider>
+    <note x="1135" y="5" backgroundDark="0" fontSize="14" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Setup</note>
+    <chooser x="1135" y="35" height="60" variable="congress" current="13" width="250" display="congress">
       <choice type="string" value="101"></choice>
       <choice type="string" value="102"></choice>
       <choice type="string" value="103"></choice>
@@ -223,8 +245,16 @@ end
       <choice type="string" value="113"></choice>
       <choice type="string" value="114"></choice>
     </chooser>
-    <slider x="1165" step="0.1" y="75" max="3" width="250" display="interparty-strengthening-factor" height="50" min="1" direction="Horizontal" default="1.5" variable="interparty-strengthening-factor"></slider>
-    <plot x="905" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Votes" y="455" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="230" xAxis="ticks" display="Yes Votes">
+    <slider x="880" step="1" y="210" max="100" width="250" display="concern-for-connections" height="50" min="0" direction="Horizontal" default="50.0" variable="concern-for-connections" units="%"></slider>
+    <slider x="880" step="0.005" y="155" max="0.1" width="250" display="relation-changability" height="50" min="0.01" direction="Horizontal" default="0.02" variable="relation-changability"></slider>
+    <slider x="880" step="0.01" y="100" max="1" width="250" display="opinion-changability" height="50" min="0.01" direction="Horizontal" default="0.33" variable="opinion-changability"></slider>
+    <note x="880" y="5" backgroundDark="0" fontSize="14" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Process</note>
+    <chooser x="880" y="35" height="60" variable="introduced-by" current="0" width="250" display="introduced-by">
+      <choice type="string" value="D"></choice>
+      <choice type="string" value="R"></choice>
+    </chooser>
+    <output x="1120" y="430" height="175" fontSize="12" width="216"></output>
+    <plot x="880" autoPlotX="true" yMax="10.0" autoPlotY="true" yAxis="Votes" y="430" xMin="0.0" height="175" legend="false" xMax="10.0" yMin="0.0" width="230" xAxis="ticks" display="Yes Votes">
       <setup></setup>
       <update></update>
       <pen interval="1.0" mode="0" display="default" color="-16777216" legend="true">
@@ -236,6 +266,7 @@ end
         <update>plot 60</update>
       </pen>
     </plot>
+    <monitor x="1120" precision="0" y="360" height="60" units="senators" fontSize="11" width="100" display="Defectors">count-defectors</monitor>
   </widgets>
   <info>## WHAT IS IT?
 
@@ -436,6 +467,17 @@ end
       </polygon>
       <circle x="47" y="195" marked="true" color="-1920102913" diameter="58" filled="true"></circle>
       <circle x="195" y="195" marked="true" color="-1920102913" diameter="58" filled="true"></circle>
+    </shape>
+    <shape name="check" rotatable="true" editableColorIndex="0">
+      <polygon color="-1920102913" filled="true" marked="true">
+        <point x="150" y="255"></point>
+        <point x="105" y="210"></point>
+        <point x="60" y="165"></point>
+        <point x="105" y="120"></point>
+        <point x="150" y="165"></point>
+        <point x="240" y="60"></point>
+        <point x="285" y="105"></point>
+      </polygon>
     </shape>
     <shape name="circle" rotatable="false" editableColorIndex="0">
       <circle x="0" y="0" marked="true" color="-1920102913" diameter="300" filled="true"></circle>

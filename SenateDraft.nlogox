@@ -245,8 +245,8 @@ end
       <choice type="string" value="113"></choice>
       <choice type="string" value="114"></choice>
     </chooser>
-    <slider x="880" step="1" y="210" max="100" width="250" display="concern-for-connections" height="50" min="0" direction="Horizontal" default="50.0" variable="concern-for-connections" units="%"></slider>
-    <slider x="880" step="0.005" y="155" max="0.1" width="250" display="relation-changability" height="50" min="0.01" direction="Horizontal" default="0.02" variable="relation-changability"></slider>
+    <slider x="880" step="1" y="210" max="100" width="250" display="concern-for-connections" height="50" min="0" direction="Horizontal" default="0.0" variable="concern-for-connections" units="%"></slider>
+    <slider x="880" step="0.005" y="155" max="0.1" width="250" display="relation-changability" height="50" min="0.01" direction="Horizontal" default="0.035" variable="relation-changability"></slider>
     <slider x="880" step="0.01" y="100" max="1" width="250" display="opinion-changability" height="50" min="0.01" direction="Horizontal" default="0.33" variable="opinion-changability"></slider>
     <note x="880" y="5" backgroundDark="0" fontSize="14" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Process</note>
     <chooser x="880" y="35" height="60" variable="introduced-by" current="0" width="250" display="introduced-by">

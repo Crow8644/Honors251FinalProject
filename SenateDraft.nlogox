@@ -185,6 +185,7 @@ to vote
     ; let x random-float 1
     
     ;; New version, attempting to make voting less erratic
+    ;; The random numbers now tend toward 0.5
     let x (random-float 0.5 + random-float 0.5)
     ifelse x < opinion [
       set last-vote "Y"
@@ -205,7 +206,6 @@ to update-relationships-based-on-votes
     ]
     [
       set weight (weight * (1 - relation-changability))
-      
     ]
   ]
 end
@@ -230,6 +230,21 @@ to-report count-democrats
   report count senators with [party = "D"]
 end
 
+to-report network-strength
+  report mean [weight] of relationships
+end
+
+to-report cross-party-network-strength
+  report mean [weight] of (relationships with [[party] of end1 != [party] of end2])
+end
+
+to-report republican-network-strength
+  report mean [weight] of (relationships with [[party] of end1 = [party] of end2 and [party] of end1 = "R"])
+end
+
+to-report democrat-network-strength
+  report mean [weight] of (relationships with [[party] of end1 = [party] of end2 and [party] of end1 = "D"])
+end
 ]]></code>
   <widgets>
     <view x="270" wrappingAllowedX="false" y="5" frameRate="30.0" minPycor="-64" height="599" showTickCounter="true" patchSize="4.612403101" fontSize="10" wrappingAllowedY="false" width="599" tickCounterLabel="ticks" maxPycor="64" updateMode="0" maxPxcor="64" minPxcor="-64"></view>
@@ -238,7 +253,7 @@ end
     <button x="190" y="80" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
     <slider x="1135" step="0.1" y="100" max="3" width="250" display="interparty-strengthening-factor" height="50" min="1" direction="Horizontal" default="1.5" variable="interparty-strengthening-factor"></slider>
     <note x="1135" y="5" backgroundDark="0" fontSize="14" width="150" markdown="false" height="25" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Setup</note>
-    <chooser x="1135" y="35" height="60" variable="congress" current="3" width="250" display="congress">
+    <chooser x="1135" y="35" height="60" variable="congress" current="5" width="250" display="congress">
       <choice type="string" value="101"></choice>
       <choice type="string" value="102"></choice>
       <choice type="string" value="103"></choice>
@@ -273,12 +288,16 @@ end
       <choice type="string" value="D"></choice>
       <choice type="string" value="R"></choice>
     </chooser>
-    <slider x="880" step="0.01" y="35" max="1" width="250" display="opinion-changability" height="50" min="0.01" direction="Horizontal" default="0.33" variable="opinion-changability"></slider>
+    <slider x="880" step="0.01" y="35" max="1" width="250" display="opinion-changability" height="50" min="0.01" direction="Horizontal" default="0.16" variable="opinion-changability"></slider>
     <slider x="880" step="0.005" y="90" max="0.1" width="250" display="relation-changability" height="50" min="0.01" direction="Horizontal" default="0.035" variable="relation-changability"></slider>
-    <slider x="880" step="1" y="145" max="100" width="250" display="concern-for-connections" height="50" min="0" direction="Horizontal" default="100.0" variable="concern-for-connections" units="%"></slider>
+    <slider x="880" step="1" y="145" max="100" width="250" display="concern-for-connections" height="50" min="0" direction="Horizontal" default="45.0" variable="concern-for-connections" units="%"></slider>
     <note x="1135" y="220" backgroundDark="0" fontSize="14" width="150" markdown="false" height="26" textColorDark="-1" textColorLight="-16777216" backgroundLight="0">Party Counts</note>
     <monitor x="1135" precision="17" y="245" height="60" fontSize="11" width="100" display="Democrats">count-democrats</monitor>
     <monitor x="1245" precision="17" y="245" height="60" fontSize="11" width="100" display="Republicans">count-republicans</monitor>
+    <monitor x="120" precision="3" y="195" height="60" fontSize="11" width="140">cross-party-network-strength</monitor>
+    <monitor x="120" precision="3" y="260" height="60" fontSize="11" width="140">republican-network-strength</monitor>
+    <monitor x="120" precision="3" y="130" height="60" fontSize="11" width="140">network-strength</monitor>
+    <monitor x="120" precision="3" y="325" height="60" fontSize="11" width="140">democrat-network-strength</monitor>
   </widgets>
   <info>## WHAT IS IT?
 

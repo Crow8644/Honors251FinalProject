@@ -248,7 +248,6 @@ end
 ]]></code>
   <widgets>
     <view x="270" wrappingAllowedX="false" y="5" frameRate="30.0" minPycor="-64" height="599" showTickCounter="true" patchSize="4.612403101" fontSize="10" wrappingAllowedY="false" width="599" tickCounterLabel="ticks" maxPycor="64" updateMode="0" maxPxcor="64" minPxcor="-64"></view>
-    <button x="125" y="30" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">setup</button>
     <button x="190" y="30" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">go</button>
     <button x="190" y="80" height="40" disableUntilTicks="false" forever="true" kind="Observer" width="55">go</button>
     <slider x="1135" step="0.1" y="100" max="3" width="250" display="interparty-strengthening-factor" height="50" min="1" direction="Horizontal" default="1.5" variable="interparty-strengthening-factor"></slider>
@@ -298,6 +297,8 @@ end
     <monitor x="120" precision="3" y="260" height="60" fontSize="11" width="140">republican-network-strength</monitor>
     <monitor x="120" precision="3" y="130" height="60" fontSize="11" width="140">network-strength</monitor>
     <monitor x="120" precision="3" y="325" height="60" fontSize="11" width="140">democrat-network-strength</monitor>
+    <monitor x="120" precision="10" y="390" height="60" fontSize="11" width="140" display="Network Polarization">network-strength / cross-party-network-strength</monitor>
+    <button x="125" y="30" height="40" disableUntilTicks="false" forever="false" kind="Observer" width="55">setup</button>
   </widgets>
   <info>## WHAT IS IT?
 
@@ -1180,4 +1181,43 @@ end
     </shape>
   </linkShapes>
   <previewCommands>setup repeat 75 [ go ]</previewCommands>
+  <experiments>
+    <experiment name="polarization-test" repetitions="20" sequentialRunOrder="true" runMetricsEveryStep="true" timeLimit="100">
+      <setup>setup</setup>
+      <go>go</go>
+      <metrics>
+        <metric>network-strength / cross-party-network-strength</metric>
+      </metrics>
+      <constants>
+        <enumeratedValueSet variable="relation-changability">
+          <value value="0.035"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="congress">
+          <value value="&quot;101&quot;"></value>
+          <value value="&quot;102&quot;"></value>
+          <value value="&quot;103&quot;"></value>
+          <value value="&quot;104&quot;"></value>
+          <value value="&quot;105&quot;"></value>
+          <value value="&quot;106&quot;"></value>
+          <value value="&quot;107&quot;"></value>
+          <value value="&quot;108&quot;"></value>
+          <value value="&quot;109&quot;"></value>
+          <value value="&quot;110&quot;"></value>
+          <value value="&quot;111&quot;"></value>
+          <value value="&quot;112&quot;"></value>
+          <value value="&quot;113&quot;"></value>
+          <value value="&quot;114&quot;"></value>
+        </enumeratedValueSet>
+        <enumeratedValueSet variable="opinion-changability">
+          <value value="0.15"></value>
+        </enumeratedValueSet>
+        <steppedValueSet variable="interparty-strengthening-factor" first="1" step="0.5" last="3"></steppedValueSet>
+        <steppedValueSet variable="concern-for-connections" first="10" step="10" last="90"></steppedValueSet>
+        <enumeratedValueSet variable="introduced-by">
+          <value value="&quot;R&quot;"></value>
+          <value value="&quot;D&quot;"></value>
+        </enumeratedValueSet>
+      </constants>
+    </experiment>
+  </experiments>
 </model>
